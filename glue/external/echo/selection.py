@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from itertools import chain
+import random
 from weakref import WeakKeyDictionary
 
 from .core import CallbackProperty
@@ -19,14 +19,24 @@ class SelectionCallbackProperty(CallbackProperty):
         self.default_index = default_index
         self._choices = WeakKeyDictionary()
         self._display = WeakKeyDictionary()
+        self._force_next_sync = WeakKeyDictionary()
 
     def __set__(self, instance, value):
         if value is not None and value not in self._choices.get(instance, ()):
             raise ValueError('value {0} is not in valid choices'.format(value))
         super(SelectionCallbackProperty, self).__set__(instance, value)
 
+    def force_next_sync(self, instance):
+        self._force_next_sync[instance] = True
+
     def _get_full_info(self, instance):
-        return self.__get__(instance), self._choices.get(instance, ())
+        if self._force_next_sync.get(instance, False):
+            try:
+                return self.__get__(instance), random.random()
+            finally:
+                self._force_next_sync[instance] = False
+        else:
+            return self.__get__(instance), self.get_choices(instance), self.get_choice_labels(instance)
 
     def get_display_func(self, instance):
         return self._display.get(instance, None)
@@ -63,23 +73,24 @@ class SelectionCallbackProperty(CallbackProperty):
 
         selection = self.__get__(instance)
 
-        if selection in choices:
-            return
-
-        if self.default_index < 0:
-            index = len(choices) + self.default_index
-        else:
-            index = self.default_index
-
-        index = min(index, len(choices) - 1)
-
-        if isinstance(choices[index], ChoiceSeparator):
-            for i in chain(range(index + 1, len(choices)), range(index - 1, -1, -1)):
-                if not isinstance(choices[i], ChoiceSeparator):
-                    index = i
-                    break
-            else:
-                self.__set__(instance, None)
+        # We do the following because 'selection in choice' actually compares
+        # equality not identity (and we really just care about identity here)
+        for choice in choices:
+            if selection is choice:
                 return
 
-        self.__set__(instance, choices[index])
+        choices_without_separators = [choice for choice in choices
+                                      if not isinstance(choice, ChoiceSeparator)]
+
+        if choices_without_separators:
+            try:
+                selection = choices_without_separators[self.default_index]
+            except IndexError:
+                if self.default_index > 0:
+                    selection = choices_without_separators[-1]
+                else:
+                    selection = choices_without_separators[0]
+        else:
+            selection = None
+
+        self.__set__(instance, selection)

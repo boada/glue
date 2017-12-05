@@ -4,10 +4,54 @@ Full changelog
 v0.13.0 (unreleased)
 --------------------
 
+* Added a new component manager that makes it possible to rename,
+  reorder, and remove components, as well as better manage derived
+  components, including editing previous equations. [#1479]
+
+* Added new messages ``DataReorderComponentMessage`` and
+  ``DataRenameComponentMessage`` which can be subscribed to. [#1479]
+  
+* Make it possible to reorder components in ``Data`` using the new
+  ``Data.reorder_components`` method. [#1479]
+  
+* The default order of components has changed - coordinate components
+  will now always come first (rather than second). [#1479]
+
 * Added support for scatter density maps, which is useful when making
   scatter plots of many points. [#1461]
 
-v0.12.1 (unreleased)
+* Improve how ComponentIDComboHelper deals with non-primary components.
+  The .visible property has been removed, and a new .derived property
+  has been added (to show/hide derived components). Components are now
+  split up into sections in the combo boxes.
+
+v0.12.4 (unreleased)
+--------------------
+
+* Fixed a bug that caused ghost components to be added when creating a
+  derived component with data[...] = ...
+
+* Fixed a bug that caused errors when removing items from a selection
+  property linked to a QComboBox.
+
+v0.12.3 (2017-11-14)
+--------------------
+
+* Fixed issues with PV slicer and spectrum viewer when changing axes
+  in the parent image viewer.
+
+v0.12.2 (2017-11-09)
+--------------------
+
+* Fix a bug when renaming tabs through the UI. [#1470]
+
+* Fix a bug that caused the 1D and 2D viewers to not update correctly
+  when the numerical values in data were changed. [#1471]
+
+* Fix a bug that caused exporting of subsets to not work with integer
+  data. [#1472]
+
+v0.12.1 (2017-10-30)
 --------------------
 
 * Fix a bug that caused glue to crash when adding components to a dataset

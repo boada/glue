@@ -65,8 +65,8 @@ class TestScatterViewer(object):
         # Check defaults when we add data
         self.viewer.add_data(self.data)
 
-        assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == 'x:y:z'
-        assert combo_as_string(self.viewer.options_widget().ui.combosel_y_att) == 'x:y:z'
+        assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == 'Main components:x:y:z:Coordinate components:Pixel Axis 0 [x]:World 0'
+        assert combo_as_string(self.viewer.options_widget().ui.combosel_y_att) == 'Main components:x:y:z:Coordinate components:Pixel Axis 0 [x]:World 0'
 
         assert viewer_state.x_att is self.data.id['x']
         assert viewer_state.x_min == -1.1
@@ -120,8 +120,8 @@ class TestScatterViewer(object):
 
     def test_remove_data(self):
         self.viewer.add_data(self.data)
-        assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == 'x:y:z'
-        assert combo_as_string(self.viewer.options_widget().ui.combosel_y_att) == 'x:y:z'
+        assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == 'Main components:x:y:z:Coordinate components:Pixel Axis 0 [x]:World 0'
+        assert combo_as_string(self.viewer.options_widget().ui.combosel_y_att) == 'Main components:x:y:z:Coordinate components:Pixel Axis 0 [x]:World 0'
         self.data_collection.remove(self.data)
         assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == ''
         assert combo_as_string(self.viewer.options_widget().ui.combosel_y_att) == ''
@@ -137,8 +137,8 @@ class TestScatterViewer(object):
         self.data.add_component([3, 4, 1, 2], 'a')
         assert self.viewer.state.x_att is self.data.id['x']
         assert self.viewer.state.y_att is self.data.id['y']
-        assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == 'x:y:z:a'
-        assert combo_as_string(self.viewer.options_widget().ui.combosel_y_att) == 'x:y:z:a'
+        assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == 'Main components:x:y:z:a:Coordinate components:Pixel Axis 0 [x]:World 0'
+        assert combo_as_string(self.viewer.options_widget().ui.combosel_y_att) == 'Main components:x:y:z:a:Coordinate components:Pixel Axis 0 [x]:World 0'
 
     def test_nonnumeric_first_component(self):
         # regression test for #208. Shouldn't complain if
@@ -226,11 +226,11 @@ class TestScatterViewer(object):
         # was selected
 
         self.viewer.add_data(self.data)
-        self.viewer.state.x_att = self.data.components[0]
+        self.viewer.state.x_att = self.data.id['x']
         test = ComponentID('test')
         self.data.update_id(self.viewer.state.x_att, test)
         assert self.viewer.state.x_att is test
-        assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == 'test:y:z'
+        assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == 'Main components:test:y:z:Coordinate components:Pixel Axis 0 [x]:World 0'
 
     def test_density_map(self):
 
@@ -486,3 +486,24 @@ class TestScatterViewer(object):
         viewer = ga.viewers[0][0]
         assert viewer.state.x_att is dc[0].id['z']
         assert visible_xaxis_labels(self.viewer.axes) == ['a', 'b', 'c']
+
+    def test_enable_disable_components_combo(self):
+
+        # Regression test for a bug that caused an error when turning off pixel
+        # components from combo boxes.
+
+        self.viewer.add_data(self.data)
+
+        self.data['a'] = self.data.id['x'] + 5
+
+        self.viewer.state.x_att_helper.pixel_coord = True
+
+        self.viewer.state.x_att = self.data.pixel_component_ids[0]
+
+        self.viewer.state.x_att_helper.pixel_coord = False
+
+    def test_component_renamed(self):
+        # If a component ID is renamed, this needs to be reflected in the combo
+        self.viewer.add_data(self.data)
+        self.data.id['x'].label = 'test'
+        assert combo_as_string(self.viewer.options_widget().ui.combosel_x_att) == 'Main components:test:y:z:Coordinate components:Pixel Axis 0 [x]:World 0'
